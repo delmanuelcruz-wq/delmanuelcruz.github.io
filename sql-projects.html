@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SQL Case Studies — Del Manuel Cruz</title>
+  <meta name="description" content="SQL case studies — pricing variance detection, data quality audits, specifier enrichment queries — the analytical layer behind the business impact." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="index.html" class="brand">Del Manuel Cruz<span class="dot">.</span></a>
+      <div class="nav-links">
+        <a href="index.html#work">Work</a>
+        <a href="dashboards.html">Dashboards</a>
+        <a href="sql-projects.html">SQL</a>
+        <a href="index.html#about">About</a>
+        <a href="index.html#contact" class="nav-cta">Get in touch</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="case-nav">
+    <div class="container">
+      <a href="index.html#work" class="case-back">← Back to selected work</a>
+    </div>
+  </div>
+
+  <header class="dash-hero">
+    <div class="container">
+      <span class="eyebrow">SQL Case Studies</span>
+      <h1>The analytical layer behind the business impact.</h1>
+      <p class="lede">
+        Three short case studies showing how I'd express the revenue protection, data enrichment, and account-ops work from my portfolio in SQL — framed as problems a BI or analytics team would actually get asked to solve.
+      </p>
+      <p style="margin-top:16px; font-size:0.85rem; color:var(--muted);">
+        Queries written in ANSI SQL, compatible with PostgreSQL, BigQuery, or Snowflake. Results shown are representative.
+      </p>
+    </div>
+  </header>
+
+  <section style="padding: 60px 0;">
+    <div class="container">
+
+      <!-- CASE 1: Pricing variance -->
+      <div class="sql-card">
+        <div class="sql-meta">
+          <span class="eyebrow">Case 01 — Revenue Protection</span>
+          <h3 style="margin-top:10px;">Detecting international pricing variance across vendor price lists</h3>
+          <p>
+            At NEO, I caught a pricing discrepancy manually by comparing two international Nuura price list files side by side — a 53% European dealer discount applied to a US order that should have used the 50% contracted rate. Here's how that same catch scales as a repeatable SQL check.
+          </p>
+          <p>
+            The idea: join the vendor price list against the contracted dealer discount table, compute the expected vs. submitted unit price per order line, and flag any line where variance exceeds a tolerance band.
+          </p>
+          <div class="sql-insight">
+            Turning a single manual catch into a recurring data quality check — so the next $263 vs. $247 discrepancy surfaces before the PO is ever processed.
+          </div>
+        </div>
+        <div>
+          <pre class="sql-code"><span class="c">-- Flag order lines with pricing variance vs. contracted dealer discount</span>
+<span class="k">WITH</span> expected_price <span class="k">AS</span> (
+  <span class="k">SELECT</span>
+    pl.sku,
+    dc.dealer_id,
+    dc.region,
+    pl.list_price_usd,
+    dc.contracted_discount_pct,
+    <span class="k">ROUND</span>(pl.list_price_usd <span class="k">*</span> (<span class="n">1</span> <span class="k">-</span> dc.contracted_discount_pct), <span class="n">2</span>) <span class="k">AS</span> expected_unit_price
+  <span class="k">FROM</span> vendor_price_list pl
+  <span class="k">JOIN</span> dealer_contracts dc
+    <span class="k">ON</span> pl.vendor_id <span class="k">=</span> dc.vendor_id
+   <span class="k">AND</span> dc.region <span class="k">=</span> <span class="s">'US'</span>
+)
+<span class="k">SELECT</span>
+  o.order_id,
+  o.customer_name,
+  ol.sku,
+  ol.submitted_unit_price,
+  ep.expected_unit_price,
+  <span class="k">ROUND</span>(ol.submitted_unit_price <span class="k">-</span> ep.expected_unit_price, <span class="n">2</span>) <span class="k">AS</span> variance_usd,
+  <span class="k">ROUND</span>((ol.submitted_unit_price <span class="k">-</span> ep.expected_unit_price)
+        <span class="k">/</span> ep.expected_unit_price <span class="k">*</span> <span class="n">100</span>, <span class="n">2</span>) <span class="k">AS</span> variance_pct,
+  <span class="k">CASE</span>
+    <span class="k">WHEN</span> <span class="f">ABS</span>(ol.submitted_unit_price <span class="k">-</span> ep.expected_unit_price) <span class="k">&gt;</span> <span class="n">5</span>
+      <span class="k">THEN</span> <span class="s">'FLAG — review before entry'</span>
+    <span class="k">ELSE</span> <span class="s">'OK'</span>
+  <span class="k">END</span> <span class="k">AS</span> status
+<span class="k">FROM</span> orders o
+<span class="k">JOIN</span> order_lines ol <span class="k">ON</span> ol.order_id <span class="k">=</span> o.order_id
+<span class="k">JOIN</span> expected_price ep
+  <span class="k">ON</span> ep.sku <span class="k">=</span> ol.sku
+ <span class="k">AND</span> ep.dealer_id <span class="k">=</span> o.dealer_id
+<span class="k">WHERE</span> o.status <span class="k">=</span> <span class="s">'PENDING_ENTRY'</span>
+  <span class="k">AND</span> <span class="f">ABS</span>(ol.submitted_unit_price <span class="k">-</span> ep.expected_unit_price) <span class="k">&gt;</span> <span class="n">2</span>
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="f">ABS</span>(variance_pct) <span class="k">DESC</span>;</pre>
+
+          <div class="sql-result">
+<span class="hdr">Representative result</span>
+order_id  sku         submitted  expected  variance  variance_pct  status
+--------  ----------  ---------  --------  --------  ------------  ----------------------
+PO-10488  NUU-RZ-BLK     247.37    263.16    -15.79         -6.00  FLAG — review before entry
+PO-10507  NUU-AN-WHT     112.50    118.40     -5.90         -4.98  FLAG — review before entry
+PO-10492  NUU-LL-BRZ      88.20     92.75     -4.55         -4.91  OK</div>
+        </div>
+      </div>
+
+      <!-- CASE 2: Specifier enrichment -->
+      <div class="sql-card">
+        <div class="sql-meta">
+          <span class="eyebrow">Case 02 — Market Development</span>
+          <h3 style="margin-top:10px;">Scoring specifier firms by outreach readiness</h3>
+          <p>
+            The 833-firm specifier database isn't useful until it's prioritized. A sales or market-development team needs a single score that captures how actionable each firm is — contact depth, email verification, and LinkedIn presence — so outreach starts with the highest-value accounts first.
+          </p>
+          <p>
+            This query combines three weighted signals into a readiness score and segments firms into priority tiers.
+          </p>
+          <div class="sql-insight">
+            Moving from "here's the list" to "here's the sequence, and here's why" — the difference between a data deliverable and a go-to-market asset.
+          </div>
+        </div>
+        <div>
+          <pre class="sql-code"><span class="c">-- Prioritize specifier firms by outreach readiness</span>
+<span class="k">WITH</span> firm_contacts <span class="k">AS</span> (
+  <span class="k">SELECT</span>
+    f.firm_id,
+    <span class="f">COUNT</span>(c.contact_id) <span class="k">AS</span> contact_count,
+    <span class="f">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> c.email_verified <span class="k">THEN</span> <span class="n">1</span> <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> verified_emails,
+    <span class="f">SUM</span>(<span class="k">CASE</span> <span class="k">WHEN</span> c.linkedin_url <span class="k">IS</span> <span class="k">NOT</span> <span class="k">NULL</span>
+              <span class="k">THEN</span> <span class="n">1</span> <span class="k">ELSE</span> <span class="n">0</span> <span class="k">END</span>) <span class="k">AS</span> linkedin_hits
+  <span class="k">FROM</span> firms f
+  <span class="k">LEFT</span> <span class="k">JOIN</span> contacts c <span class="k">ON</span> c.firm_id <span class="k">=</span> f.firm_id
+  <span class="k">GROUP</span> <span class="k">BY</span> f.firm_id
+)
+<span class="k">SELECT</span>
+  f.firm_name,
+  f.specifier_category,
+  fc.contact_count,
+  fc.verified_emails,
+  fc.linkedin_hits,
+  <span class="k">ROUND</span>(
+      (fc.verified_emails <span class="k">*</span> <span class="n">35</span>)
+    <span class="k">+</span> (fc.linkedin_hits    <span class="k">*</span> <span class="n">25</span>)
+    <span class="k">+</span> (<span class="f">LEAST</span>(fc.contact_count, <span class="n">5</span>) <span class="k">*</span> <span class="n">8</span>),
+  <span class="n">0</span>) <span class="k">AS</span> readiness_score,
+  <span class="k">CASE</span>
+    <span class="k">WHEN</span> fc.verified_emails <span class="k">&gt;=</span> <span class="n">2</span> <span class="k">AND</span> fc.contact_count <span class="k">&gt;=</span> <span class="n">3</span> <span class="k">THEN</span> <span class="s">'Tier 1 — Hot'</span>
+    <span class="k">WHEN</span> fc.verified_emails <span class="k">&gt;=</span> <span class="n">1</span> <span class="k">OR</span>  fc.linkedin_hits   <span class="k">&gt;=</span> <span class="n">3</span> <span class="k">THEN</span> <span class="s">'Tier 2 — Warm'</span>
+    <span class="k">ELSE</span> <span class="s">'Tier 3 — Needs Enrichment'</span>
+  <span class="k">END</span> <span class="k">AS</span> priority_tier
+<span class="k">FROM</span> firms f
+<span class="k">JOIN</span> firm_contacts fc <span class="k">ON</span> fc.firm_id <span class="k">=</span> f.firm_id
+<span class="k">WHERE</span> f.market <span class="k">=</span> <span class="s">'NYC'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> readiness_score <span class="k">DESC</span>;</pre>
+
+          <div class="sql-result">
+<span class="hdr">Representative result</span>
+firm_name                 category           contacts  emails  linkedin  score  tier
+-----------------------   ----------------   --------  ------  --------  -----  -----------------------
+Vance & Holt Architects   Architecture              5       3         5    255  Tier 1 — Hot
+Edison Studio             Interior Design           4       2         3    177  Tier 1 — Hot
+Lumen Office              Lighting Design           4       1         4    167  Tier 2 — Warm
+Frontdoor Studio          Residential               2       0         1     41  Tier 3 — Needs Enrichment</div>
+        </div>
+      </div>
+
+      <!-- CASE 3: Account health -->
+      <div class="sql-card">
+        <div class="sql-meta">
+          <span class="eyebrow">Case 03 — Account Operations</span>
+          <h3 style="margin-top:10px;">Identifying at-risk accounts in a 600+ account portfolio</h3>
+          <p>
+            At Pharmsource, I managed 603 independent pharmacy accounts and coordinated every order across Purchasing, Accounting, and Sales. The operational question behind that coverage: which accounts are <em>quietly</em> slipping before they go fully dark?
+          </p>
+          <p>
+            This query flags accounts whose ordering cadence has materially degraded — comparing their last-90-day activity against their trailing baseline.
+          </p>
+          <div class="sql-insight">
+            Account health is a leading indicator — the customers you rescue in week three are the customers you keep. Losing them in week eight is just slower math.
+          </div>
+        </div>
+        <div>
+          <pre class="sql-code"><span class="c">-- Flag accounts whose recent order cadence has degraded materially</span>
+<span class="k">WITH</span> recent <span class="k">AS</span> (
+  <span class="k">SELECT</span>
+    account_id,
+    <span class="f">COUNT</span>(<span class="k">*</span>) <span class="k">AS</span> orders_90d,
+    <span class="f">SUM</span>(amount_usd) <span class="k">AS</span> revenue_90d
+  <span class="k">FROM</span> orders
+  <span class="k">WHERE</span> order_date <span class="k">&gt;=</span> <span class="f">CURRENT_DATE</span> <span class="k">-</span> <span class="k">INTERVAL</span> <span class="s">'90 days'</span>
+  <span class="k">GROUP</span> <span class="k">BY</span> account_id
+),
+baseline <span class="k">AS</span> (
+  <span class="k">SELECT</span>
+    account_id,
+    <span class="k">ROUND</span>(<span class="f">COUNT</span>(<span class="k">*</span>) <span class="k">/</span> <span class="n">3.0</span>, <span class="n">1</span>) <span class="k">AS</span> avg_orders_per_90d,
+    <span class="k">ROUND</span>(<span class="f">SUM</span>(amount_usd) <span class="k">/</span> <span class="n">3.0</span>, <span class="n">2</span>) <span class="k">AS</span> avg_revenue_per_90d
+  <span class="k">FROM</span> orders
+  <span class="k">WHERE</span> order_date <span class="k">BETWEEN</span> <span class="f">CURRENT_DATE</span> <span class="k">-</span> <span class="k">INTERVAL</span> <span class="s">'365 days'</span>
+                       <span class="k">AND</span> <span class="f">CURRENT_DATE</span> <span class="k">-</span> <span class="k">INTERVAL</span> <span class="s">'90 days'</span>
+  <span class="k">GROUP</span> <span class="k">BY</span> account_id
+)
+<span class="k">SELECT</span>
+  a.account_name,
+  a.owner_rep,
+  <span class="f">COALESCE</span>(r.orders_90d, <span class="n">0</span>) <span class="k">AS</span> orders_last_90d,
+  b.avg_orders_per_90d   <span class="k">AS</span> baseline_orders,
+  <span class="f">COALESCE</span>(r.revenue_90d, <span class="n">0</span>) <span class="k">AS</span> revenue_last_90d,
+  b.avg_revenue_per_90d  <span class="k">AS</span> baseline_revenue,
+  <span class="k">CASE</span>
+    <span class="k">WHEN</span> <span class="f">COALESCE</span>(r.orders_90d,<span class="n">0</span>) <span class="k">=</span> <span class="n">0</span>
+         <span class="k">AND</span> b.avg_orders_per_90d <span class="k">&gt;=</span> <span class="n">2</span>            <span class="k">THEN</span> <span class="s">'DARK — zero activity'</span>
+    <span class="k">WHEN</span> <span class="f">COALESCE</span>(r.orders_90d,<span class="n">0</span>) <span class="k">&lt;</span> b.avg_orders_per_90d <span class="k">*</span> <span class="n">0.5</span>
+                                              <span class="k">THEN</span> <span class="s">'AT RISK — 50%+ drop'</span>
+    <span class="k">WHEN</span> <span class="f">COALESCE</span>(r.orders_90d,<span class="n">0</span>) <span class="k">&lt;</span> b.avg_orders_per_90d <span class="k">*</span> <span class="n">0.8</span>
+                                              <span class="k">THEN</span> <span class="s">'Watch — 20%+ drop'</span>
+    <span class="k">ELSE</span> <span class="s">'Healthy'</span>
+  <span class="k">END</span> <span class="k">AS</span> health_flag
+<span class="k">FROM</span> accounts a
+<span class="k">LEFT</span> <span class="k">JOIN</span> recent   r <span class="k">ON</span> r.account_id <span class="k">=</span> a.account_id
+<span class="k">LEFT</span> <span class="k">JOIN</span> baseline b <span class="k">ON</span> b.account_id <span class="k">=</span> a.account_id
+<span class="k">WHERE</span> b.avg_orders_per_90d <span class="k">&gt;=</span> <span class="n">1</span>
+<span class="k">ORDER</span> <span class="k">BY</span>
+  <span class="k">CASE</span> health_flag
+    <span class="k">WHEN</span> <span class="s">'DARK — zero activity'</span> <span class="k">THEN</span> <span class="n">1</span>
+    <span class="k">WHEN</span> <span class="s">'AT RISK — 50%+ drop'</span>  <span class="k">THEN</span> <span class="n">2</span>
+    <span class="k">WHEN</span> <span class="s">'Watch — 20%+ drop'</span>   <span class="k">THEN</span> <span class="n">3</span>
+    <span class="k">ELSE</span> <span class="n">4</span>
+  <span class="k">END</span>,
+  baseline_revenue <span class="k">DESC</span>;</pre>
+
+          <div class="sql-result">
+<span class="hdr">Representative result</span>
+account_name           rep       orders_90d  baseline  revenue_90d  baseline_rev  flag
+--------------------   -------   ----------  --------  -----------  ------------  ---------------------
+Carlisle Medical       D. Cruz            0       3.2         0.00       3,820.15  DARK — zero activity
+Freedom Pharmacy       D. Cruz            1       4.0       412.80       5,120.00  AT RISK — 50%+ drop
+Westview Pharmacy      D. Cruz            3       4.5     1,980.40       5,480.22  Watch — 20%+ drop
+Lakeshore Rx           D. Cruz            4       3.8     2,240.10       3,690.88  Healthy</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="next-case">
+    <div class="container">
+      <a href="index.html#contact">
+        <div class="next-case-inner">
+          <div>
+            <div class="next-case-label">Ready to talk shop?</div>
+            <div class="next-case-title">Get in touch <span class="arrow">→</span></div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <span>© 2026 Del Manuel Cruz</span>
+      <span><a href="mailto:delmanuelcruz@gmail.com" style="color:inherit;">delmanuelcruz@gmail.com</a></span>
+    </div>
+  </footer>
+
+  <script src="interactions.js"></script>
+</body>
+</html>

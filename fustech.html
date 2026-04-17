@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fustech SaaS — Case Study · Del Manuel Cruz</title>
+  <meta name="description" content="Built a multi-tenant B2B SaaS workforce management platform solo — 6-table relational DB, 7 custom views, row-level security, and a 6-piece GTM package, shipped with zero engineering budget." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="index.html" class="brand">Del Manuel Cruz<span class="dot">.</span></a>
+      <div class="nav-links">
+        <a href="index.html#work">Work</a>
+        <a href="dashboards.html">Dashboards</a>
+        <a href="sql-projects.html">SQL</a>
+        <a href="index.html#about">About</a>
+        <a href="index.html#contact" class="nav-cta">Get in touch</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CASE BACK -->
+  <div class="case-nav">
+    <div class="container">
+      <a href="index.html#work" class="case-back">← Back to selected work</a>
+    </div>
+  </div>
+
+  <!-- CASE HERO -->
+  <header class="case-hero">
+    <div class="container fade">
+      <div class="case-meta-row">
+        <span><strong>Client</strong> Fustech Consulting, LLC</span>
+        <span><strong>Role</strong> Product &amp; Operations Consultant</span>
+        <span><strong>Timeline</strong> March 2026 – Present</span>
+        <span><strong>Scope</strong> Sole contributor</span>
+      </div>
+      <span class="eyebrow">Case Study 01 — B2B SaaS Build</span>
+      <h1 style="margin-top:16px;">
+        Shipped a multi-tenant B2B SaaS workforce management platform — solo, no engineering budget, under 10 hours to MVP.
+      </h1>
+      <p class="case-tagline">
+        A full product build — data model, security, automation, dashboards, and a C-suite-ready go-to-market package — done without hiring a single engineer.
+      </p>
+
+      <div class="stack-list">
+        <span class="stack-tag">Google Sheets (Relational DB)</span>
+        <span class="stack-tag">AppSheet (No-Code)</span>
+        <span class="stack-tag">Google OAuth</span>
+        <span class="stack-tag">AppSheet Bots</span>
+        <span class="stack-tag">HTML Prototyping</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- METRIC BAR -->
+  <div class="metric-bar">
+    <div class="metric">
+      <div class="metric-value">7</div>
+      <div class="metric-label">Custom App Views</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">6</div>
+      <div class="metric-label">Relational Tables</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">$0</div>
+      <div class="metric-label">Engineering Spend</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value">&lt;10h</div>
+      <div class="metric-label">Time to MVP</div>
+    </div>
+  </div>
+
+  <!-- CASE BODY -->
+  <section class="case-body">
+    <div class="container">
+
+      <div class="case-grid case-block">
+        <div class="case-label">Context</div>
+        <div>
+          <h2>The challenge</h2>
+          <p>
+            Fustech needed to validate a B2B workforce management product concept with real functionality — not a clickable mockup. The constraint: no engineering resources, no dev budget, and no room for the typical SaaS buildout timeline. The deliverable had to look and behave like a real product, enforce real multi-tenant data boundaries, and be credible enough to show to potential customers.
+          </p>
+        </div>
+      </div>
+
+      <div class="case-grid case-block">
+        <div class="case-label">Approach</div>
+        <div>
+          <h2>What I did</h2>
+          <p>
+            I treated the constraint as the design brief. Instead of buying a tech stack, I engineered one out of tools Fustech already had — using Google Sheets as a normalized relational database and AppSheet as the no-code application layer on top of it. Every decision was made with production-grade multi-tenant SaaS behavior in mind: auth, row-level security, alerting, and real dashboards.
+          </p>
+
+          <ul>
+            <li><strong>Designed a 6-table relational data model</strong> in Google Sheets with proper primary/foreign-key relationships — usable as the single source of truth across every view and automation.</li>
+            <li><strong>Built 7 custom AppSheet views</strong> covering the end-user, manager, and admin experiences — including real-time analytics dashboards and a fully functional mobile layout.</li>
+            <li><strong>Implemented enterprise-grade row-level security</strong> across all 6 tables using AppSheet ClientID security filters and Google OAuth — enabling true multi-tenant deployment where each client only sees their own records.</li>
+            <li><strong>Deployed 3 automated email workflows via AppSheet Bots</strong>: a high-severity risk alert that fires instantly, an unresolved-issue reminder, and a new hire Day-7 check-in trigger — eliminating manual monitoring entirely.</li>
+            <li><strong>Produced a 6-piece GTM package as sole contributor</strong>: an interactive HTML product prototype, a 12-section business plan, a 14-slide investor &amp; sales deck, a 3-page executive summary, a step-by-step tutorial deck, and a fully scripted C-suite cold call playbook with gatekeeper strategy — all to Fustech brand standards.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="case-grid case-block">
+        <div class="case-label">Outcome</div>
+        <div>
+          <h2>The result</h2>
+          <p>
+            A working product with real data boundaries, real automation, and a complete commercial package around it — shipped end-to-end by one person, in under ten hours of build time. The business has a live, demonstrable asset to show prospects, not a deck full of promises.
+          </p>
+          <div class="pull-quote">
+            The interesting part isn't the no-code tooling. It's the architectural discipline — treating a spreadsheet like a real database and designing the security model before writing a single view.
+          </div>
+        </div>
+      </div>
+
+      <div class="case-grid case-block">
+        <div class="case-label">What this shows</div>
+        <div>
+          <h2>Skills demonstrated</h2>
+          <ul>
+            <li><strong>Product thinking end-to-end</strong> — scoping, data modeling, UX, automation, and commercialization in the same project.</li>
+            <li><strong>Data architecture under constraint</strong> — designing a normalized relational schema in a tool most people treat as a glorified list.</li>
+            <li><strong>Executive communication</strong> — translating a technical build into a 14-slide investor deck and a scripted C-suite cold call playbook.</li>
+            <li><strong>Independent delivery</strong> — sole contributor, production-level documentation, and brand-aligned output without handholding.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- NEXT -->
+  <div class="next-case">
+    <div class="container">
+      <a href="neo-lighting.html">
+        <div class="next-case-inner">
+          <div>
+            <div class="next-case-label">Next case</div>
+            <div class="next-case-title">NEO Architectural Lighting — revenue protection <span class="arrow">→</span></div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <span>© 2026 Del Manuel Cruz</span>
+      <span><a href="mailto:delmanuelcruz@gmail.com" style="color:inherit;">delmanuelcruz@gmail.com</a></span>
+    </div>
+  </footer>
+
+  <script src="interactions.js"></script>
+</body>
+</html>

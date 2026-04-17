@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Dashboards — Del Manuel Cruz</title>
+  <meta name="description" content="Interactive dashboard demo — NYC architectural and design specifier market, modeled on a 833-firm enrichment project delivered to C-suite leadership." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="index.html" class="brand">Del Manuel Cruz<span class="dot">.</span></a>
+      <div class="nav-links">
+        <a href="index.html#work">Work</a>
+        <a href="dashboards.html">Dashboards</a>
+        <a href="sql-projects.html">SQL</a>
+        <a href="index.html#about">About</a>
+        <a href="index.html#contact" class="nav-cta">Get in touch</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="case-nav">
+    <div class="container">
+      <a href="index.html#work" class="case-back">← Back to selected work</a>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <header class="dash-hero">
+    <div class="container">
+      <span class="eyebrow">Live Dashboards — Interactive Demo</span>
+      <h1>NYC Architectural &amp; Design Specifier Market Intelligence</h1>
+      <p class="lede">
+        A working interactive view built on the 833-firm NYC specifier database I delivered to NEO's C-suite. Filter by specifier category, sort the table, and read the KPIs as you go. Every chart recalculates live.
+      </p>
+      <p style="margin-top:16px; font-size:0.85rem; color:var(--muted);">
+        Note: firm-level identifiers here are anonymized &amp; the dataset has been adjusted for public display. Numbers mirror the structure of the real deliverable.
+      </p>
+    </div>
+  </header>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="container">
+      <div class="filter-row">
+        <span class="filter-label">Filter by category</span>
+        <button class="filter-pill active" data-filter="all">All (833)</button>
+        <button class="filter-pill" data-filter="architecture">Architecture</button>
+        <button class="filter-pill" data-filter="interior">Interior Design</button>
+        <button class="filter-pill" data-filter="lighting">Lighting Design</button>
+        <button class="filter-pill" data-filter="hospitality">Hospitality</button>
+        <button class="filter-pill" data-filter="workplace">Workplace</button>
+        <button class="filter-pill" data-filter="residential">Residential</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- KPI TILES -->
+    <div class="kpi-grid">
+      <div class="kpi-tile">
+        <div class="kpi-label">Firms in View</div>
+        <div class="kpi-value" id="kpi-firms">833</div>
+        <div class="kpi-delta">6 specifier categories</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">Verified Emails</div>
+        <div class="kpi-value" id="kpi-emails">399</div>
+        <div class="kpi-delta" id="kpi-emails-pct">47.9% coverage</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">LinkedIn URLs</div>
+        <div class="kpi-value" id="kpi-linkedin">586</div>
+        <div class="kpi-delta" id="kpi-linkedin-pct">70.3% coverage</div>
+      </div>
+      <div class="kpi-tile">
+        <div class="kpi-label">Fully-Populated Profiles</div>
+        <div class="kpi-value" id="kpi-full">291</div>
+        <div class="kpi-delta" id="kpi-full-pct">34.9% w/ 3–5 contacts</div>
+      </div>
+    </div>
+
+    <!-- CHART ROW 1 -->
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <h3>Firms by Specifier Category</h3>
+          <span class="sub">Counts update with filter</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-category"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <h3>Contact Enrichment Completeness</h3>
+          <span class="sub">% of firms by populated profile state</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-donut"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CHART ROW 2 -->
+    <div class="chart-grid" style="grid-template-columns: 1fr;">
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <h3>Email Verification Rate by Category</h3>
+          <span class="sub">Where we have high-confidence outreach coverage</span>
+        </div>
+        <div class="chart-wrap tall"><canvas id="chart-rate"></canvas></div>
+      </div>
+    </div>
+
+    <!-- DATA TABLE -->
+    <div class="table-card">
+      <div class="chart-card-head">
+        <h3>Firm-Level Register</h3>
+        <span class="sub">Click headers to sort · Showing <span id="row-count">20</span> of <span id="row-total">833</span></span>
+      </div>
+      <table class="data-table" id="firm-table">
+        <thead>
+          <tr>
+            <th data-sort="name">Firm</th>
+            <th data-sort="category">Category</th>
+            <th data-sort="contacts" class="num">Contacts</th>
+            <th data-sort="email" class="num">Email %</th>
+            <th data-sort="linkedin" class="num">LinkedIn</th>
+            <th data-sort="score" class="num">Profile Score</th>
+          </tr>
+        </thead>
+        <tbody id="firm-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- TAKEAWAY -->
+    <div class="case-grid case-block" style="padding: 20px 0 80px;">
+      <div class="case-label">Analyst Takeaway</div>
+      <div>
+        <h2>What this dashboard is for</h2>
+        <p>
+          The real question leadership cared about wasn't "how many firms did we find" — it was "where should the outbound motion concentrate first." Filtering by category surfaces the two answers that matter: which verticals have the highest email-verification rate (lowest outreach friction), and which have deep contact populations (multi-threaded account motion possible).
+        </p>
+        <p>
+          That's the difference between a list and a go-to-market asset. The list is 833 rows. The asset is a prioritized sequence with a defensible reason per segment.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="next-case">
+    <div class="container">
+      <a href="sql-projects.html">
+        <div class="next-case-inner">
+          <div>
+            <div class="next-case-label">See the analysis layer</div>
+            <div class="next-case-title">SQL case studies &amp; pricing variance queries <span class="arrow">→</span></div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <span>© 2026 Del Manuel Cruz</span>
+      <span><a href="mailto:delmanuelcruz@gmail.com" style="color:inherit;">delmanuelcruz@gmail.com</a></span>
+    </div>
+  </footer>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="interactions.js"></script>
+
+  <script>
+  /* =========================================================
+     Dashboard data + logic — self-contained
+     ========================================================= */
+  const CATEGORY_META = {
+    architecture: { label: "Architecture",    total: 228, emails: 118, linkedin: 174, fully: 88 },
+    interior:     { label: "Interior Design", total: 196, emails:  98, linkedin: 144, fully: 76 },
+    lighting:     { label: "Lighting Design", total:  84, emails:  46, linkedin:  64, fully: 34 },
+    hospitality:  { label: "Hospitality",     total: 112, emails:  49, linkedin:  72, fully: 35 },
+    workplace:    { label: "Workplace",       total: 104, emails:  46, linkedin:  68, fully: 29 },
+    residential:  { label: "Residential",     total: 109, emails:  42, linkedin:  64, fully: 29 },
+  };
+
+  // Generate a representative firm-level dataset (seeded, deterministic)
+  function seededRand(seed) {
+    let s = seed;
+    return () => {
+      s = (s * 9301 + 49297) % 233280;
+      return s / 233280;
+    };
+  }
+  const firmNamePools = {
+    architecture: ["Vance & Holt Architects", "Meridian Design Studio", "North Atlas Architects", "Kessler Row Studio", "Civic Line Architects", "Oakhall & Partners", "Halden Field Studio", "Brookforge Architects", "Ironhill Studio", "Pacific Narrow", "Linea Works", "Union Draft Studio"],
+    interior:     ["Edison Studio", "Velvet Room Interiors", "Atelier Noir", "Fifth Arc Interiors", "Studio Parallel", "Draft Room", "Willow Lane Interiors", "Halfmoon Design", "Domain & Co.", "Arc Interior House"],
+    lighting:     ["Lumen Office", "Fielder Lighting", "Prism & Co.", "Edge Light Studio", "Kasten Lighting Design", "Glow Cartel", "Nightline Design", "Tether Light Studio"],
+    hospitality:  ["Oliver House Studio", "Voss Hospitality Design", "Seaward Interiors", "Nacre Hotel Design", "Park Room Co.", "Lantern House"],
+    workplace:    ["Grid Studio", "Workroom Collaborative", "Office Lab NYC", "Atrium Design", "Portman & Keep"],
+    residential:  ["Frontdoor Studio", "Elmside Interiors", "Parlour Design", "Riverhouse Collective", "Brownstone Atelier"],
+  };
+
+  function buildFirms() {
+    const rand = seededRand(7);
+    const list = [];
+    Object.entries(CATEGORY_META).forEach(([key, m]) => {
+      for (let i = 0; i < m.total; i++) {
+        const pool = firmNamePools[key];
+        const base = pool[i % pool.length];
+        const name = i < pool.length ? base : `${base} ${Math.floor(i / pool.length) + 1}`;
+        // Approx match the category-level completeness
+        const contacts = 1 + Math.floor(rand() * 5); // 1-5
+        const hasEmail = rand() < (m.emails / m.total);
+        const hasLinkedIn = rand() < (m.linkedin / m.total);
+        const isFully = contacts >= 3 && rand() < (m.fully / m.total) * 1.35;
+        const emailPct = hasEmail ? Math.floor(60 + rand() * 40) : Math.floor(rand() * 40);
+        const score = Math.min(100, Math.round(
+          (hasEmail ? 35 : 10) + (hasLinkedIn ? 25 : 8) + (isFully ? 30 : contacts * 4) + rand() * 5
+        ));
+        list.push({
+          name,
+          categoryKey: key,
+          category: m.label,
+          contacts,
+          email: emailPct,
+          linkedin: hasLinkedIn ? "✓" : "—",
+          linkedinBool: hasLinkedIn,
+          score,
+        });
+      }
+    });
+    return list;
+  }
+
+  const FIRMS = buildFirms();
+
+  /* ----- State ----- */
+  let activeFilter = "all";
+  let sortKey = "score";
+  let sortAsc = false;
+
+  function filteredFirms() {
+    return activeFilter === "all"
+      ? FIRMS
+      : FIRMS.filter(f => f.categoryKey === activeFilter);
+  }
+
+  /* ----- Chart.js global defaults ----- */
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = "#6B6B6B";
+  Chart.defaults.borderColor = "#E6E1D5";
+
+  const COLORS = {
+    accent: "#7A3410",
+    accentLight: "#B86A3A",
+    navy: "#1E2A44",
+    gold: "#C19A4B",
+    green: "#2C5E3F",
+    ink: "#1A1A1A",
+    muted: "#D9D3C6",
+  };
+
+  /* ----- Charts ----- */
+  const ctxCategory = document.getElementById("chart-category");
+  const ctxDonut = document.getElementById("chart-donut");
+  const ctxRate = document.getElementById("chart-rate");
+
+  const categoryChart = new Chart(ctxCategory, {
+    type: "bar",
+    data: {
+      labels: Object.values(CATEGORY_META).map(m => m.label),
+      datasets: [{
+        label: "Total Firms",
+        data: Object.values(CATEGORY_META).map(m => m.total),
+        backgroundColor: COLORS.accent,
+        borderRadius: 3,
+        barThickness: 28,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: "#E6E1D5" } },
+      },
+    },
+  });
+
+  const donutChart = new Chart(ctxDonut, {
+    type: "doughnut",
+    data: {
+      labels: ["Fully populated (3–5 contacts)", "Partial profile", "Minimum data"],
+      datasets: [{
+        data: [291, 280, 262],
+        backgroundColor: [COLORS.accent, COLORS.gold, COLORS.muted],
+        borderColor: "#FBF8F2",
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      cutout: "62%",
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, padding: 14 } },
+      },
+    },
+  });
+
+  const rateChart = new Chart(ctxRate, {
+    type: "bar",
+    data: {
+      labels: Object.values(CATEGORY_META).map(m => m.label),
+      datasets: [
+        {
+          label: "Email Verified %",
+          data: Object.values(CATEGORY_META).map(m => Math.round((m.emails / m.total) * 100)),
+          backgroundColor: COLORS.accent,
+          borderRadius: 3,
+        },
+        {
+          label: "LinkedIn %",
+          data: Object.values(CATEGORY_META).map(m => Math.round((m.linkedin / m.total) * 100)),
+          backgroundColor: COLORS.navy,
+          borderRadius: 3,
+        },
+        {
+          label: "Fully Populated %",
+          data: Object.values(CATEGORY_META).map(m => Math.round((m.fully / m.total) * 100)),
+          backgroundColor: COLORS.gold,
+          borderRadius: 3,
+        },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 14 } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { callback: v => v + "%" },
+          grid: { color: "#E6E1D5" },
+        },
+      },
+    },
+  });
+
+  /* ----- Render table ----- */
+  function renderTable() {
+    const tbody = document.getElementById("firm-tbody");
+    const rows = filteredFirms().slice().sort((a, b) => {
+      const av = a[sortKey], bv = b[sortKey];
+      if (typeof av === "number") return sortAsc ? av - bv : bv - av;
+      return sortAsc ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
+    }).slice(0, 20);
+
+    tbody.innerHTML = rows.map(r => {
+      const dotClass = r.score >= 75 ? "" : (r.score >= 50 ? "mid" : "low");
+      return `
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.category}</td>
+          <td class="num">${r.contacts}</td>
+          <td class="num">${r.email}%</td>
+          <td class="num">${r.linkedin}</td>
+          <td class="num"><span class="dot-ind ${dotClass}"></span>${r.score}</td>
+        </tr>`;
+    }).join("");
+
+    document.getElementById("row-count").textContent = Math.min(20, filteredFirms().length);
+    document.getElementById("row-total").textContent = filteredFirms().length;
+
+    // Header sorted styling
+    document.querySelectorAll("#firm-table thead th").forEach(th => {
+      th.classList.remove("sorted", "asc");
+      if (th.dataset.sort === sortKey) {
+        th.classList.add("sorted");
+        if (sortAsc) th.classList.add("asc");
+      }
+    });
+  }
+
+  /* ----- Update KPIs + category chart on filter ----- */
+  function updateKPIs() {
+    const list = filteredFirms();
+    const total = list.length;
+    const emails = list.filter(f => f.email >= 60).length;
+    const linkedin = list.filter(f => f.linkedinBool).length;
+    const full = list.filter(f => f.contacts >= 3 && f.score >= 70).length;
+
+    document.getElementById("kpi-firms").textContent = total;
+    document.getElementById("kpi-emails").textContent = emails;
+    document.getElementById("kpi-emails-pct").textContent =
+      total ? ((emails / total) * 100).toFixed(1) + "% coverage" : "—";
+    document.getElementById("kpi-linkedin").textContent = linkedin;
+    document.getElementById("kpi-linkedin-pct").textContent =
+      total ? ((linkedin / total) * 100).toFixed(1) + "% coverage" : "—";
+    document.getElementById("kpi-full").textContent = full;
+    document.getElementById("kpi-full-pct").textContent =
+      total ? ((full / total) * 100).toFixed(1) + "% w/ 3–5 contacts" : "—";
+  }
+
+  function updateCategoryChart() {
+    // When filter = all, show full category breakdown
+    // When specific filter, show only that category prominently
+    if (activeFilter === "all") {
+      categoryChart.data.datasets[0].data = Object.values(CATEGORY_META).map(m => m.total);
+      categoryChart.data.datasets[0].backgroundColor = Object.keys(CATEGORY_META).map(() => COLORS.accent);
+    } else {
+      categoryChart.data.datasets[0].data = Object.values(CATEGORY_META).map(m => m.total);
+      categoryChart.data.datasets[0].backgroundColor = Object.keys(CATEGORY_META).map(k =>
+        k === activeFilter ? COLORS.accent : "#D9D3C6"
+      );
+    }
+    categoryChart.update();
+  }
+
+  /* ----- Wire up filter pills ----- */
+  document.querySelectorAll(".filter-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeFilter = btn.dataset.filter;
+      updateKPIs();
+      updateCategoryChart();
+      renderTable();
+    });
+  });
+
+  /* ----- Wire up sortable headers ----- */
+  document.querySelectorAll("#firm-table thead th").forEach(th => {
+    th.addEventListener("click", () => {
+      const k = th.dataset.sort;
+      if (sortKey === k) sortAsc = !sortAsc;
+      else { sortKey = k; sortAsc = false; }
+      renderTable();
+    });
+  });
+
+  // Initial render
+  updateKPIs();
+  updateCategoryChart();
+  renderTable();
+  </script>
+
+</body>
+</html>
